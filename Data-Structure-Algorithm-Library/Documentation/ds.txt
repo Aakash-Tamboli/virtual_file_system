@@ -1,0 +1,354 @@
+1) Genric Stack:
+struct type ErrorCode have two properties,
+succ----------> it aknowlegde your operation is successfull or not
+code----------> it aknowlegde why your operation failed compare with error code.txt
+Special Guidline:
+Don't Change properties of struct stack type instances if You Change it You fool it yourself because it breaks your purpose to use this stack.
+		Some Methods
+Most Imp. a)initStack(Stack *ptr,int sizeofOneElement);
+	  You need to first initialize your stack with information of
+	  what you want to store in this stack,otherwise your stack is always
+	  remains Empty
+	  b)pushOnStack(Stack *ptr,const void *data,ErrorCode *err);
+	  for check operation is successfull or not you need to checked succ value against struct error code True means 1 and false
+	  means 0;
+	  c)isStackEmpty(Stack *ptr) 
+	    if stack is empty return 1 other wise it return 0
+	  d)popFromStack(Stack *ptr,void *data,ErrorCode *err)
+	  e)clearStack(struct __Stack__ *) it will delete all data inside your stack
+Example To Use Genric Stack
+#include<stdio.h>
+#include<ds.h>
+int main()
+{
+int i;
+char m,data;
+ErrorCode err;
+Stack s;
+initStack(&s,sizeof(char));
+m='d';
+pushOnStack(&s,(const void *)&m,&err);
+m='r';
+pushOnStack(&s,(const void *)&m,&err);
+m='o';
+pushOnStack(&s,(const void *)&m,&err);
+m='L';
+pushOnStack(&s,(const void *)&m,&err);
+m=' ';
+pushOnStack(&s,(const void *)&m,&err);
+m='e';
+pushOnStack(&s,(const void *)&m,&err);
+m='h';
+pushOnStack(&s,(const void *)&m,&err);
+m='T';
+pushOnStack(&s,(const void *)&m,&err);
+m=' ';
+pushOnStack(&s,(const void *)&m,&err);
+m='e';
+pushOnStack(&s,(const void *)&m,&err);
+m='s';
+pushOnStack(&s,(const void *)&m,&err);
+m='i';
+pushOnStack(&s,(const void *)&m,&err);
+m='a';
+pushOnStack(&s,(const void *)&m,&err);
+m='r';
+pushOnStack(&s,(const void *)&m,&err);
+m='P';
+pushOnStack(&s,(const void *)&m,&err);
+while(!isStackEmpty(&s))
+{
+popFromStack(&s,(void *)&data,&err);
+if(err.succ==false)
+{
+printf("Something Problem in your stack\n");
+break;
+}
+else
+{
+printf("%c",data);
+}
+}
+printf(":  comes from stack\n");
+clearStack(&s);
+return 0;
+}
+2) Genric Queue:
+struct type ErrorCode have two properties,
+succ----------> it aknowlegde your operation is successfull or not
+code----------> it aknowlegde why your operation failed compare with error code.txt
+Special Guidline:
+Don't Change properties of struct Queue type instances if You Change it You fool it yourself because it breaks your purpose to use this Queue.
+		Some Methods
+Most Imp. a)initQueue(Queue *ptr,int sizeofOneElement);
+	  You need to first initialize your Queue with information of
+	  what you want to store in this Queue,otherwise your Queue is always
+	  remains Empty
+	 b)addToQueue(Queue *ptr,const void *data,ErrorCode *err);
+	 for check operation is successfull or not you need to checked succ value against struct error code True means 1 and false
+	 means 0;
+	 c)isQueueEmpty(Queue *ptr) 
+	   if Queue is empty return 1 other wise it return 0
+	 d)removeFromQueue(Queue *ptr,void *data,ErrorCode *err)
+	 e)clearQueue(struct __Queue__ *) it will delete all data inside your Queue
+Use of Genric Queue
+#include<stdio.h>
+#include<ds.h>
+int main()
+{
+int i;
+char m,data;
+ErrorCode err;
+Queue q;
+initQueue(&q,sizeof(char));
+m='P';
+addToQueue(&q,(const void *)&m,&err);
+m='R';
+addToQueue(&q,(const void *)&m,&err);
+m='A';
+addToQueue(&q,(const void *)&m,&err);
+m='I';
+addToQueue(&q,(const void *)&m,&err);
+m='S';
+addToQueue(&q,(const void *)&m,&err);
+m='E';
+addToQueue(&q,(const void *)&m,&err);
+m=' ';
+addToQueue(&q,(const void *)&m,&err);
+m='T';
+addToQueue(&q,(const void *)&m,&err);
+m='H';
+addToQueue(&q,(const void *)&m,&err);
+m='E';
+addToQueue(&q,(const void *)&m,&err);
+m=' ';
+addToQueue(&q,(const void *)&m,&err);
+m='L';
+addToQueue(&q,(const void *)&m,&err);
+m='O';
+addToQueue(&q,(const void *)&m,&err);
+m='R';
+addToQueue(&q,(const void *)&m,&err);
+m='D';
+addToQueue(&q,(const void *)&m,&err);
+printf("(");
+while(!isQueueEmpty(&q))
+{
+removeFromQueue(&q,(void *)&data,&err);
+if(err.succ==false)
+{
+printf("Something Problem in your stack\n");
+break;
+}
+else
+{
+printf("%c",data);
+}
+}
+printf(")");
+printf(":comes from Queue\n");
+return 0;
+}
+from here Documentation writing credit goes to: My Good Friend
+3) Genric Doubly Linked List : 
+
+To create DoublyLinkedList:
+
+DoublyLinkedList * createDoublyLinkedList(int sizeOfOneElement,OperatonDetail *error); 
+OperatonDetail error;  
+DoublyLinkedList *list;  
+list=createDoublyLinkedList(sizeof(int),&error);   
+if(error.succ==true) list created.    
+if(error.succ==false) list is not created.  
+
+To add element in Doubly Linked List:
+
+void addToDoublyLinkedList(DoublyLinkedList *doublyLinkedList,const void *ptr,OperationDetail *error);
+OperationDetail error;`  
+int i=100;`  
+addToDoublyLinkedList(list,(void *)&i,&error);`  
+if(`success==true`) element is added.  
+if(`success==false`) element is not added.  
+    
+To insert element in Doubly Linked List:
+   void insertIntoDoublyLinkedList(DoublyLinkedList *doublyLinkedList,int index,void *ptr,OperationDetail *error);
+OperationDetail error;
+int i=100;  
+int index; (position to insert element in list)  
+insertIntoDoublyLinkedList(list,index,(void *)&i,&error);`  
+if(error.succ==true) element is inserted.  
+if(error.succ==false) element is not inserted.  
+   
+To remove element from Doubly Linked List:
+
+void removeFromDoublyLinkedList(DoublyLinkedList *doublyLinkedList,void *ptr,int index,OperationDetail *error);  
+OperationDetail error;
+void * ptr;  
+int index; (position to remove element in list)  
+  removeFromDoublyLinkedList(list,ptr,sindex,&error);  
+  if(error.succ==true) element is removed.  
+  if(error.succ==false) element is not removed.  
+
+To get size of Doubly Linked List
+  int getSizeOfDoublyLinkedList(DoublyLinkedList *doublyLinkedList);  
+int size;  
+size=getSizeOfDoublyLinkedList(list);`  
+
+To get an element` from Doubly Linked List    
+  void getFromDoublyLinkedList(DoublyLinkedList *doublyLinkedList,void *ptr,int index,bool *success);
+OperationDetail error;
+void * ptr;
+int index;`  
+getFromDoublyLinkedList(list,ptr,index,&error);`  
+if(error.succ==true) element is received in ptr.  
+if(error.succ==false) element is not received int ptr.  
+
+
+// start edit here
+* To `merge one list into another list` of Doubly Linked List  
+  ```c
+  void appendToDoublyLinkedList(DoublyLinkedList *targetDoublyLinkedList,DoublyLinkedList * sourceDoublyLinkedList,bool *success);
+  ```
+  we have `list_1` and `list_2` of DoublyLinkedList.    
+  for merging `list_1` into `list_2`.  
+  `bool success;`  
+  `appendToDoublyLinkedList(list_1,list_2,&success);`  
+  if(`success=true`) lists are merged.  
+  if(`success==false`) lists are not merged.  
+
+* To `clear` the Doubly Linked List  
+  ```c
+  void clearDoublyLinkedList(DoublyLinkedList *doublyLinkedList);
+  ```
+  use to free (remove) nodes of list (size of list is zero).  
+  `clearDoublyLinkedList(list);`
+
+* To `delete/destroy` the Doubly Linked List    
+  ```c
+  void destroyDoublyLinkedList(DoublyLinkedList *doublyLinkedList);
+  ```
+  use to delete the list.  
+  `destroyDoublyLinkedList(list);`  
+  ***
+### Description of Iterator functions of Doubly Linked List :  
+* To `create iterator` of Doubly Linked List
+  ```c
+  DoublyLinkedListIterator getDoublyLinkedListIterator(DoublyLinkedList *doublyLinkedList,bool *success);  
+  ```
+  `DoublyLinkedListIterator it;`  
+  `bool success;`  
+  `it=getDoublyLinkedListIterator(list,&success);`  
+  if(`success==true`) iterator (it) is created.  
+  if(`success==false`) iterator (it) is not created.  
+  
+* To `check iterator's position` in Doubly Linked List
+  ```c
+  bool hasNextInDoublyLinkedList(DoublyLinkedListIterator *doublyLinkedListIterator); 
+  ```
+  `bool check;`  
+  `check=hasNextInDoublyLinkedList(&it);`  
+  if(`check==true`) next element is exist in the list.  
+  if(`check==false`) iterator is at end of the list.  
+
+* To `check iterator's position` in Doubly Linked List
+  ```c
+  void * getNextElementFromDoublyLinkedList(DoublyLinkedListIterator *doublyLinkedListIterator,bool *success);
+  ```
+  In this function iterator will return the current pointing element (address) and traverse one step forward.  
+  `void * ptr;`  
+  `bool success;`  
+  `ptr=getNextElementFromDoublyLinkedList(&it,&success);`  
+  if(`success==true`) element is received in ptr.  
+  if(`success==false`)  element is not received in ptr.  
+
+* To `create reverse iterator` of Doubly Linked List
+  ```c
+  DoublyLinkedListReverseIterator getDoublyLinkedListReverseIterator(DoublyLinkedList *doublyLinkedList,bool *success);
+  ```
+  `DoublyLinkedListReverseIterator it;`  
+  `bool success;`  
+  `it=getDoublyLinkedListReverseIterator(list,&success);`  
+  if(`success==true`) reverse iterator (it) is created.  
+  if(`success==false`) reverse iterator (it) is not created.  
+  
+* To `check reverse iterator's position` in Doubly Linked List
+  ```c
+  bool hasPreviousInDoublyLinkedList(DoublyLinkedListReverseIterator *doublyLinkedListReverseIterator); 
+  ```
+  `bool check;`  
+  `check=hasPreviousInDoublyLinkedList(&it);`  
+  if(`check==true`) previous element is exist in the list.  
+  if(`check==false`) iterator is at start of the list.  
+
+* To `check reverse iterator's position` in Doubly Linked List
+  ```c
+  void * getPreviousElementFromDoublyLinkedList(DoublyLinkedListReverseIterator *doublyLinkedListReverseIterator,bool *success);
+  ```
+  In this function iterator will return the current pointing element (data of node) and traverse one step backward.  
+  `void * ptr;`  
+  `bool success;`  
+  `ptr=getPreviousElementFromDoublyLinkedList(&it,&success);`  
+  if(`success==true`) element is received in ptr.  
+  if(`success==false`)  element is not received in ptr.  
+  ***
+Use Of Doubly Linked List :
+#include<ds.h>
+#include<stdio.h>
+int main()
+{
+int i1,i2,i3;
+int y,*x;
+OperationDetail error;
+DoublyLinkedList *list1;
+list1=createDoublyLinkedList(sizeof(int),&error);
+if(error.succ==false)
+  {
+  printf("Unable to create list");
+  return 0;
+  }
+  printf("List Created\n");
+  i1=100;
+  i2=200;
+  i3=300;
+
+  //adding data
+  addToDoublyLinkedList(list1,(void *)&i1,&error);
+  if(error.succ) printf("%d added to list1\n",i1);
+  else printf("Unable to add %d to list1\n",i1);
+  //adding data
+  addToDoublyLinkedList(list1,(void *)&i2,&error);
+  if(error.succ) printf("%d added to list1\n",i2);
+  else printf("Unable to add %d to list1\n",i2);
+  //inserting data
+  insertIntoDoublyLinkedList(list1,1,(void *)&i3,&error);
+  if(error.succ) printf("%d inserted to list1\n",i3);
+  else printf("Unable to insert %d to list1\n",i3);
+  //size of list
+  printf("Size of list1 is %d\n",getSizeOfDoublyLinkedList(list1));
+
+  //use of iterator
+  //(similarly we can use reverse iterator in it for reverse iteration.)
+  DoublyLinkedListIterator it;
+  it=getDoublyLinkedListIterator(list1,&error);
+  if(error.succ)
+  {
+  while(hasNextInDoublyLinkedList(&it))
+  {
+  x=(int *)getNextElementFromDoublyLinkedList(&it,&error);
+  printf("%d\n",*x);
+  }
+  }
+ 
+  //removing data of 0 index
+  x=removeFromDoublyLinkedList(list1,0,&error);
+  if(error.succ) printf("%d removed list1\n",*x);
+  else printf("Unable to remove");
+ 
+  //clearing list
+  clearDoublyLinkedList(list1);
+
+  //destroying list
+  destroyDoublyLinkedList(list1);
+  return 0;
+  }
+

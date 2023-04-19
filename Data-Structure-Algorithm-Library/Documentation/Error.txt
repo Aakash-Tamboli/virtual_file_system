@@ -1,0 +1,16 @@
+Error       Description
+0	Operation Successfull Executed
+1	Problem in LowerBound,UpperBound Or may be you are passing same values
+2	Unable To Allocate Memory For Internal Use
+3	Problem in your Data_ Structure Address may be you passed NULL
+4	Problem in data address which you want to store in Data_Structure or retrieve from Data_Structure may be you
+	passed NULL;
+	void pushOnStack(&yourStack,NULL,&YourstructtypeErrorCode)
+	popFromStack(&yourStack,NULL,&YourstructtypeErrorCode)
+5	Your Data structue is Empty.
+6	Problem in Your Comparator(predicate) may be you passed NULL
+7	Your Size of One Element is 0 or may be negative.
+8	Your Collection is Not int data_type.this Algo only for int data_type
+9	Invalid position(index) to insert,remove and get in your data_structure
+10	For Append one data_structure to another data_structure both are statisfied this conditon if not then error code occured
+       i) sizeOfOneElement should be same in both data_structure. 
