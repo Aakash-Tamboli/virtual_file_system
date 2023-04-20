@@ -29,6 +29,9 @@ return new_string;
 // utility functions ends
 
 // global variables and structure declaration starts
+char FILE_NAME[10]="tmfs.fs";
+int permission_mode=S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH;
+int global_file_descriptor;
 typedef struct __$__path_log_DS
 {
 char current_working_directory[1001];
@@ -37,7 +40,6 @@ char path_log[1001];
 }PATH_DS;
 PATH_DS path;
 AVLTree *avlTree;
-int file_descriptor;
 typedef struct __$__Input
 {
 int argc;
@@ -85,6 +87,7 @@ void show_current_working_directory();
 void makeDirectory(Input *);
 void changeDirectory(Input *);
 void list_of_content();
+int create_file_and_prepare_database();
 void displayFileContent(Input *);
 
 // forward declaration of function ends
@@ -133,14 +136,14 @@ else
 meta->file_size=-1;
 meta->starting_byte_information=-1;
 meta->end_information=-1;
-result=lseek(file_descriptor,0,SEEK_SET);
+result=lseek(global_file_descriptor,0,SEEK_SET);
 if(result<0)
 {
 printf("Some internal problem, directory not registered\n");
 free(meta);
 return;
 }
-result=read(file_descriptor,&header,sizeof(Header));
+result=read(global_file_descriptor,&header,sizeof(Header));
 if(result<0)
 {
 printf("Some internal problem, directory not registered\n");
@@ -150,28 +153,28 @@ return;
 header.number_of_files_directories++;
 wb=header.new_record_for_ds_byte;
 header.new_record_for_ds_byte=header.new_record_for_ds_byte+sizeof(META_DATA_FOR_DS);
-result=lseek(file_descriptor,wb,SEEK_SET);
+result=lseek(global_file_descriptor,wb,SEEK_SET);
 if(result<0)
 {
 printf("Some internal problem, directory not registered\n");
 free(meta);
 return;
 }
-result=write(file_descriptor,meta,sizeof(META_DATA_FOR_DS));
+result=write(global_file_descriptor,meta,sizeof(META_DATA_FOR_DS));
 if(result<0)
 {
 printf("Some internal problem, directory not registered\n");
 free(meta);
 return;
 }
-result=lseek(file_descriptor,0,SEEK_SET);
+result=lseek(global_file_descriptor,0,SEEK_SET);
 if(result<0)
 {
 printf("Some internal problem, directory not registered\n");
 free(meta);
 return;
 }
-result=write(file_descriptor,&header,sizeof(Header));
+result=write(global_file_descriptor,&header,sizeof(Header));
 if(result<0)
 {
 printf("Some internal problem, directory not registered\n");
@@ -187,6 +190,63 @@ free(meta);
 }
 }// function ends
 
+int create_file_and_prepare_database()
+{
+Header header;
+int result,current_offset,size_of_data_written,number_of_bytes_extracted;
+char hole_start_from_this_location='|';
+char hole_end_flag='&';
+OperationDetail success;
+global_file_descriptor=open(FILE_NAME,O_RDWR | O_CREAT,permission_mode);
+if(global_file_descriptor==-1) return 0; // unable to create file
+header.number_of_files_directories=0;
+header.new_record_for_ds_byte=sizeof(Header);
+header.new_record_for_acutal_data_byte=1048579; // it needs attention
+result=write(global_file_descriptor,&header,sizeof(Header));
+if(result==-1)
+{
+remove(FILE_NAME);
+return 0; // unable to write header
+}
+current_offset=lseek(global_file_descriptor,999976,SEEK_SET);
+if(current_offset==-1)
+{
+remove(FILE_NAME);
+printf("Error No: %d\n",errno);
+return 0; // unable to create space for data structure in file
+}
+result=write(global_file_descriptor,&hole_start_from_this_location,1);
+if(result==-1)
+{
+remove(FILE_NAME);
+printf("Error No: %d\n",errno);
+return 0; // unable to create space for data structure in file
+}
+current_offset=lseek(global_file_descriptor,2000000,SEEK_SET);
+if(current_offset==-1)
+{
+remove(FILE_NAME);
+printf("Error No: %d\n",errno);
+return 0; // unable to create space for acutal data in file
+}
+result=write(global_file_descriptor,&hole_end_flag,1);
+if(result==-1)
+{
+remove(FILE_NAME);
+printf("Error No: %d\n",errno);
+return 0; // unable to create space for acutal in file
+}
+current_offset=lseek(global_file_descriptor,0,SEEK_SET);
+if(current_offset==-1)
+{
+remove(FILE_NAME);
+printf("Error No: %d\n",errno);
+return 0; // unable to set internal pointer to begning location
+}
+avlTree=createAVLTree(&success,comparator);
+if(success.succ==false) return 0; // unable to create AVLTree
+return 1;
+}
 
 int populateDataStructure()
 {
@@ -204,70 +264,21 @@ struct dirent *entry;
 char _path[4096];
 Input input;
 META_DATA_FOR_DS *meta;
-permission_mode=S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH;
 strcpy(path.current_working_directory,"/");
 cwd_ptr=getcwd(path.absolute_path,4096);
 if(cwd_ptr==NULL) return 1;
 input.argc=3;
 strcpy(path.path_log,"tmfs");
-file_descriptor=open("tmfs.fs",O_RDWR,permission_mode);
-if(file_descriptor<0)
+global_file_descriptor=open(FILE_NAME,O_RDWR,permission_mode);
+if(global_file_descriptor<0)
 {
-file_descriptor=open("tmfs.fs",O_RDWR | O_CREAT,permission_mode);
-if(file_descriptor==-1) return 0; // unable to create file
-header.number_of_files_directories=0;
-header.new_record_for_ds_byte=sizeof(Header);
-header.new_record_for_acutal_data_byte=1048579; // it needs attention
-result=write(file_descriptor,&header,sizeof(Header));
-if(result==-1)
-{
-remove("tmfs.fs");
-return 0; // unable to write header
-}
-current_offset=lseek(file_descriptor,999976,SEEK_SET);
-if(current_offset==-1)
-{
-remove("tmfs.fs");
-printf("Error No: %d\n",errno);
-return 0; // unable to create space for data structure in file
-}
-result=write(file_descriptor,&hole_start_from_this_location,1);
-if(result==-1)
-{
-remove("tmfs.fs");
-printf("Error No: %d\n",errno);
-return 0; // unable to create space for data structure in file
-}
-current_offset=lseek(file_descriptor,2000000,SEEK_SET);
-if(current_offset==-1)
-{
-remove("tmfs.fs");
-printf("Error No: %d\n",errno);
-return 0; // unable to create space for acutal data in file
-}
-result=write(file_descriptor,&hole_end_flag,1);
-if(result==-1)
-{
-remove("tmfs.fs");
-printf("Error No: %d\n",errno);
-return 0; // unable to create space for acutal in file
-}
-current_offset=lseek(file_descriptor,0,SEEK_SET);
-if(current_offset==-1)
-{
-remove("tmfs.fs");
-printf("Error No: %d\n",errno);
-return 0; // unable to set internal pointer to begning location
-}
-avlTree=createAVLTree(&success,comparator);
-if(success.succ==false) return 0; // unable to create AVLTree
-// return 1;
+if(create_file_and_prepare_database()==0) return 0;
 }
 else
 {
 avlTree=createAVLTree(&success,comparator);
 if(success.succ==false) return 0; // unable to create AVLTree
-result=read(file_descriptor,&header,sizeof(Header));
+result=read(global_file_descriptor,&header,sizeof(Header));
 if(result==-1)
 {
 destroyAVLTree(avlTree);
@@ -279,7 +290,7 @@ while(i<header.number_of_files_directories)
 meta=(META_DATA_FOR_DS *)malloc(sizeof(META_DATA_FOR_DS));
 if(meta!=NULL)
 {
-result=read(file_descriptor,meta,sizeof(META_DATA_FOR_DS));
+result=read(global_file_descriptor,meta,sizeof(META_DATA_FOR_DS));
 if(result==-1)
 {
 releasingTheMemory(avlTree);
@@ -401,7 +412,7 @@ free(vCmd);
 
 void copy_data(Input *input,char registering_data)
 {
-int local_file_descriptor,result,permission_mode,wb1,wb2,i;
+int local_global_file_descriptor,result,permission_mode,wb1,wb2,i;
 Header header;
 char new_file_name[101];
 char file_path[4028];
@@ -439,10 +450,9 @@ else
 strcpy(new_file_name,input->argument2);
 }
 if(strcmp(new_file_name,"tmfs.fs")==0 || strcmp(new_file_name,"file_system")==0) return;
-permission_mode=S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH;
 strcpy(file_path,input->argument1+2);
-local_file_descriptor=open(file_path,O_RDONLY,permission_mode);
-if(local_file_descriptor<0)
+local_global_file_descriptor=open(file_path,O_RDONLY,permission_mode);
+if(local_global_file_descriptor<0)
 {
 printf("%s is not exists, invalid path or some internal problem\n",file_path);
 return;
@@ -450,17 +460,17 @@ return;
 meta=(META_DATA_FOR_DS *)malloc(sizeof(META_DATA_FOR_DS));
 if(meta==NULL)
 {
-close(local_file_descriptor);
+close(local_global_file_descriptor);
 printf("Low memory Issue\n");
 return;
 }
 strcpy(meta->file_name,new_file_name);
-meta->file_size=lseek(local_file_descriptor,0,SEEK_END);
+meta->file_size=lseek(local_global_file_descriptor,0,SEEK_END);
 if(meta->file_size<0)
 {
 printf("Your File is corrupt\n");
 free(meta);
-close(local_file_descriptor);
+close(local_global_file_descriptor);
 return;
 }
 strcpy(meta->parent_directory,path.current_working_directory);
@@ -468,30 +478,30 @@ buffer=(char *)malloc(sizeof(char)*meta->file_size);
 if(buffer==NULL)
 {
 printf("Low memory Issue\n");
-close(local_file_descriptor);
+close(local_global_file_descriptor);
 free(meta);
 return;
 }
 
-result=lseek(local_file_descriptor,0,SEEK_SET);
+result=lseek(local_global_file_descriptor,0,SEEK_SET);
 if(result<0)
 {
 printf("Some internal problem\n");
-close(local_file_descriptor);
+close(local_global_file_descriptor);
 free(meta);
 free(buffer);
 return;
 }
 
-result=read(local_file_descriptor,buffer,meta->file_size);
+result=read(local_global_file_descriptor,buffer,meta->file_size);
 if(result<0)
 {
 printf("Some internal problem\n");
-close(local_file_descriptor);
+close(local_global_file_descriptor);
 free(meta);
 free(buffer);
 }
-close(local_file_descriptor);
+close(local_global_file_descriptor);
 
 vMeta=(META_DATA_FOR_DS *)getFromAVLTree(avlTree,(void *)meta,&success);
 if(success.succ==true)
@@ -505,7 +515,7 @@ return;
 }
 }
 
-result=lseek(file_descriptor,0,SEEK_SET);
+result=lseek(global_file_descriptor,0,SEEK_SET);
 if(result<0)
 {
 printf("Some internal problem\n");
@@ -514,7 +524,7 @@ free(buffer);
 return;
 }
 
-result=read(file_descriptor,&header,sizeof(Header));
+result=read(global_file_descriptor,&header,sizeof(Header));
 if(result<0)
 {
 printf("Some internal problem\n");
@@ -531,7 +541,7 @@ header.new_record_for_acutal_data_byte=header.new_record_for_acutal_data_byte+me
 meta->starting_byte_information=wb2;
 meta->end_information=wb2+meta->file_size;
 
-result=lseek(file_descriptor,wb2,SEEK_SET);
+result=lseek(global_file_descriptor,wb2,SEEK_SET);
 if(result<0)
 {
 printf("Some internal problem\n");
@@ -539,16 +549,7 @@ free(meta);
 free(buffer);
 return;
 }
-result=write(file_descriptor,buffer,meta->file_size);
-if(result<0)
-{
-printf("Some internal problem\n");
-free(meta);
-free(buffer);
-return;
-}
-
-result=lseek(file_descriptor,wb1,SEEK_SET);
+result=write(global_file_descriptor,buffer,meta->file_size);
 if(result<0)
 {
 printf("Some internal problem\n");
@@ -557,7 +558,7 @@ free(buffer);
 return;
 }
 
-result=write(file_descriptor,meta,sizeof(META_DATA_FOR_DS));
+result=lseek(global_file_descriptor,wb1,SEEK_SET);
 if(result<0)
 {
 printf("Some internal problem\n");
@@ -566,7 +567,7 @@ free(buffer);
 return;
 }
 
-result=lseek(file_descriptor,0,SEEK_SET);
+result=write(global_file_descriptor,meta,sizeof(META_DATA_FOR_DS));
 if(result<0)
 {
 printf("Some internal problem\n");
@@ -575,7 +576,16 @@ free(buffer);
 return;
 }
 
-result=write(file_descriptor,&header,sizeof(Header));
+result=lseek(global_file_descriptor,0,SEEK_SET);
+if(result<0)
+{
+printf("Some internal problem\n");
+free(meta);
+free(buffer);
+return;
+}
+
+result=write(global_file_descriptor,&header,sizeof(Header));
 if(result<0)
 {
 printf("Some internal problem\n");
@@ -629,7 +639,7 @@ meta->file_size=-1;
 meta->starting_byte_information=-1;
 meta->end_information=-1;
 
-result=lseek(file_descriptor,0,SEEK_SET);
+result=lseek(global_file_descriptor,0,SEEK_SET);
 if(result<0)
 {
 printf("1 Some internal problem, directory not created\n");
@@ -637,7 +647,7 @@ free(meta);
 return;
 }
 
-result=read(file_descriptor,&header,sizeof(Header));
+result=read(global_file_descriptor,&header,sizeof(Header));
 if(result<0)
 {
 printf("2 Some internal problem, directory not created\n");
@@ -649,14 +659,14 @@ header.number_of_files_directories++;
 wb=header.new_record_for_ds_byte;
 header.new_record_for_ds_byte=header.new_record_for_ds_byte+sizeof(META_DATA_FOR_DS);
 
-result=lseek(file_descriptor,wb,SEEK_SET);
+result=lseek(global_file_descriptor,wb,SEEK_SET);
 if(result<0)
 {
 printf("3 Some internal problem, directory not created\n");
 free(meta);
 return;
 }
-result=write(file_descriptor,meta,sizeof(META_DATA_FOR_DS));
+result=write(global_file_descriptor,meta,sizeof(META_DATA_FOR_DS));
 if(result<0)
 {
 printf("4 Some internal problem, directory not created\n");
@@ -674,7 +684,7 @@ return;
 }
 else
 {
-result=lseek(file_descriptor,0,SEEK_SET);
+result=lseek(global_file_descriptor,0,SEEK_SET);
 if(result<0)
 {
 printf("Some internal problem, directory not created\n");
@@ -682,7 +692,7 @@ rmdir(meta->file_name);
 free(meta);
 return;
 }
-result=write(file_descriptor,&header,sizeof(Header));
+result=write(global_file_descriptor,&header,sizeof(Header));
 if(result<0)
 {
 printf("Some internal problem, directory not created\n");
@@ -858,14 +868,14 @@ if(data==NULL)
 printf("low memory can't display\n");
 return;
 }
-result=lseek(file_descriptor,vMeta->starting_byte_information,SEEK_SET);
+result=lseek(global_file_descriptor,vMeta->starting_byte_information,SEEK_SET);
 if(result<0)
 {
 printf("Some internal problem\n");
 free(data);
 return;
 }
-result=read(file_descriptor,data,vMeta->file_size);
+result=read(global_file_descriptor,data,vMeta->file_size);
 if(result<0)
 {
 printf("Some internal problem\n");
