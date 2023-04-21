@@ -38,7 +38,7 @@ char current_working_directory[1001];
 char absolute_path[4096];
 char path_log[1001];
 }PATH_DS;
-PATH_DS path;
+PATH_DS global_path;
 AVLTree *avlTree;
 typedef struct __$__Input
 {
@@ -89,6 +89,7 @@ void changeDirectory(Input *);
 void list_of_content();
 int create_file_and_prepare_database();
 void displayFileContent(Input *);
+void scan_directory_and_load_into_our_database();
 
 // forward declaration of function ends
 
@@ -124,7 +125,7 @@ printf("unable to register directory into our system because low memory Issue\n"
 return;
 }
 strcpy(meta->file_name,input->argument1);
-strcpy(meta->parent_directory,path.current_working_directory);
+strcpy(meta->parent_directory,global_path.current_working_directory);
 vMeta=(META_DATA_FOR_DS *)getFromAVLTree(avlTree,(void *)meta,&success);
 if(success.succ==true)
 {
@@ -248,31 +249,77 @@ if(success.succ==false) return 0; // unable to create AVLTree
 return 1;
 }
 
+void scan_directory_and_load_into_our_database()
+{
+DIR *directory;
+struct dirent *entry;
+char _path[4096];
+struct stat entry_info;
+int result,i;
+Input input;
+input.argc=3;
+directory=opendir(global_path.absolute_path);
+if(directory==NULL)
+{
+printf("Some internal problem thats why current files and directory in your %s directory are not loaded into virtual file system\n",global_path.absolute_path);
+return;
+}
+
+while(1)
+{
+entry=readdir(directory);
+if(entry==NULL) break;
+if(entry->d_name[0]=='.') continue;
+strcpy(_path,global_path.absolute_path);
+if(strlen(_path)>0 && _path[strlen(_path)-1]!='/')
+{
+strcat(_path,"/");
+}
+strcat(_path,entry->d_name);
+result=stat(_path,&entry_info);
+if(result==0)
+{
+if(S_ISDIR(entry_info.st_mode))
+{
+i=strlen(_path);
+while(_path[i]!='/') i--;
+strcpy(input.argument1,_path+i+1);
+register_this_directory_into_our_datastructure(&input);
+}
+else if(S_ISREG(entry_info.st_mode))
+{
+strcpy(input.argument1,"x:");
+strcat(input.argument1,_path);
+strcpy(input.argument2,".");
+copy_data(&input,'Y');
+}
+}
+else
+{
+printf("Some internal problem thats why current files and directory in your %s directory are not loaded into virtual file system\n",global_path.absolute_path);
+closedir(directory);
+return;
+}
+} // while ends
+}
+
 int populateDataStructure()
 {
 Header header;
-int result,current_offset,size_of_data_written,number_of_bytes_extracted;
-char hole_start_from_this_location='|';
-char hole_end_flag='&';
+int result;
 OperationDetail success;
-int i,permission_mode;
-char c;
+int i;
 char *cwd_ptr;
-DIR *directory;
-struct stat entry_info;
-struct dirent *entry;
-char _path[4096];
-Input input;
 META_DATA_FOR_DS *meta;
-strcpy(path.current_working_directory,"/");
-cwd_ptr=getcwd(path.absolute_path,4096);
-if(cwd_ptr==NULL) return 1;
-input.argc=3;
-strcpy(path.path_log,"tmfs");
+strcpy(global_path.current_working_directory,"/");
+cwd_ptr=getcwd(global_path.absolute_path,4096);
+if(cwd_ptr==NULL) return 0;
+strcpy(global_path.path_log,"tmfs");
 global_file_descriptor=open(FILE_NAME,O_RDWR,permission_mode);
 if(global_file_descriptor<0)
 {
 if(create_file_and_prepare_database()==0) return 0;
+scan_directory_and_load_into_our_database();
 }
 else
 {
@@ -313,49 +360,7 @@ return 0; // because of Low Memory Issue
 }
 i++;
 } // while ends
-// return 1;
 }
-directory=opendir(path.absolute_path);
-if(directory==NULL)
-{
-printf("Some internal problem thats why current files and directory in your %s directory are not loaded into virtual file system\n",path.absolute_path);
-return 1;
-}
-while(1)
-{
-entry=readdir(directory);
-if(entry==NULL) break;
-if(entry->d_name[0]=='.') continue;
-strcpy(_path,path.absolute_path);
-if(strlen(_path)>0 && _path[strlen(_path)-1]!='/')
-{
-strcat(_path,"/");
-}
-strcat(_path,entry->d_name);
-result=stat(_path,&entry_info);
-if(result==0)
-{
-if(S_ISDIR(entry_info.st_mode))
-{
-i=strlen(_path);
-while(_path[i]!='/') i--;
-strcpy(input.argument1,_path+i+1);
-register_this_directory_into_our_datastructure(&input);
-}
-else if(S_ISREG(entry_info.st_mode))
-{
-strcpy(input.argument1,"x:");
-strcat(input.argument1,_path);
-strcpy(input.argument2,".");
-copy_data(&input,'Y');
-}
-}
-else
-{
-printf("Unable to determine type of [%s]\n",_path);
-}
-} // while ends
-result=closedir(directory);
 return 1;
 } // function ends
 
@@ -473,7 +478,7 @@ free(meta);
 close(local_global_file_descriptor);
 return;
 }
-strcpy(meta->parent_directory,path.current_working_directory);
+strcpy(meta->parent_directory,global_path.current_working_directory);
 buffer=(char *)malloc(sizeof(char)*meta->file_size);
 if(buffer==NULL)
 {
@@ -506,7 +511,7 @@ close(local_global_file_descriptor);
 vMeta=(META_DATA_FOR_DS *)getFromAVLTree(avlTree,(void *)meta,&success);
 if(success.succ==true)
 {
-if(strcmp(vMeta->parent_directory,path.current_working_directory)==0)
+if(strcmp(vMeta->parent_directory,global_path.current_working_directory)==0)
 {
 if(registering_data=='N') printf("%s is already exist duplicates not allowed\n",vMeta->file_name);
 free(meta);
@@ -604,7 +609,7 @@ free(buffer);
 
 void show_current_working_directory()
 {
-printf("%s\n",path.current_working_directory);
+printf("%s\n",global_path.current_working_directory);
 }
 
 
@@ -624,7 +629,7 @@ printf("unable to create directory\n");
 return;
 }
 strcpy(meta->file_name,input->argument1);
-strcpy(meta->parent_directory,path.current_working_directory);
+strcpy(meta->parent_directory,global_path.current_working_directory);
 
 vMeta=(META_DATA_FOR_DS *)getFromAVLTree(avlTree,(void *)meta,&success);
 if(success.succ==true)
@@ -730,15 +735,15 @@ return;
 
 if(strcmp(input->argument1,"..")==0)
 {
-if(strcmp(path.current_working_directory,"/")==0)
+if(strcmp(global_path.current_working_directory,"/")==0)
 {
 printf("We are already on root directory\n");
 }
 else
 {
-strcpy(_cwd,path.current_working_directory);
-strcpy(_absolute_path,path.absolute_path);
-strcpy(_path_log,path.path_log);
+strcpy(_cwd,global_path.current_working_directory);
+strcpy(_absolute_path,global_path.absolute_path);
+strcpy(_path_log,global_path.path_log);
 i=strlen(_cwd)-2;
 j=strlen(_absolute_path)-1;
 k=strlen(_path_log)-1;
@@ -755,9 +760,9 @@ printf("Some internal problem,directory not changed\n");
 }
 else
 {
-strcpy(path.current_working_directory,_cwd);
-strcpy(path.absolute_path,_absolute_path);
-strcpy(path.path_log,_path_log);
+strcpy(global_path.current_working_directory,_cwd);
+strcpy(global_path.absolute_path,_absolute_path);
+strcpy(global_path.path_log,_path_log);
 }
 }
 return;
@@ -769,7 +774,7 @@ printf("Low memory issue\n");
 return;
 }
 strcpy(meta->file_name,input->argument1);
-strcpy(meta->parent_directory,path.current_working_directory);
+strcpy(meta->parent_directory,global_path.current_working_directory);
 vMeta=(META_DATA_FOR_DS *)getFromAVLTree(avlTree,meta,&success); // it is because our desgin depends upon the data of tmfs.fs
 if(success.succ==false)
 {
@@ -777,7 +782,7 @@ printf("Directory not exist\n");
 free(meta);
 return;
 }
-strcpy(path_name,path.absolute_path);
+strcpy(path_name,global_path.absolute_path);
 strcat(path_name,"/");
 strcat(path_name,input->argument1);
 result=chdir(path_name);
@@ -788,11 +793,11 @@ return;
 }
 else
 {
-strcat(path.current_working_directory,input->argument1);
-strcat(path.current_working_directory,"/");
-strcpy(path.absolute_path,path_name);
-strcat(path.path_log,"/");
-strcat(path.path_log,input->argument1);
+strcat(global_path.current_working_directory,input->argument1);
+strcat(global_path.current_working_directory,"/");
+strcpy(global_path.absolute_path,path_name);
+strcat(global_path.path_log,"/");
+strcat(global_path.path_log,input->argument1);
 }
 }
 
@@ -819,7 +824,7 @@ return;
 }
 else
 {
-if(strcmp(meta->parent_directory,path.current_working_directory)==0)
+if(strcmp(meta->parent_directory,global_path.current_working_directory)==0)
 {
 if(meta->file_size==-1) printf("Directory: %s\n",meta->file_name);
 else printf("File: %s Size: %d\n",meta->file_name,meta->file_size);
@@ -853,7 +858,7 @@ printf("low memory can't display\n");
 return;
 }
 strcpy(meta->file_name,input->argument1);
-strcpy(meta->parent_directory,path.current_working_directory);
+strcpy(meta->parent_directory,global_path.current_working_directory);
 vMeta=(META_DATA_FOR_DS *)getFromAVLTree(avlTree,meta,&success);
 if(success.succ==false)
 {
@@ -898,7 +903,7 @@ return 0;
 }
 while(1)
 {
-printf("%s>",path.path_log);
+printf("%s>",global_path.path_log);
 scanf("%[^\n]",cmd);
 __fpurge(stdin);
 extracting_data(cmd,&input);
