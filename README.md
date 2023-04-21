@@ -1,5 +1,5 @@
 ## Assignment Detail
-Let'say you'r inside abcd named directory, if we type ./tmfs ENTER
+Let'say you'r inside abcd named directory, if we type ./tmfs and PRESS ENTER
 
 then first your application check tmfs.fs file exists or not
 
