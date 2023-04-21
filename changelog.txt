@@ -1,5 +1,0 @@
-20 april:
-1) change variable name <file_descriptor> into <global file_descriptor> because of more clarity reason
-2) implement modular approach in populate datastructure function
-21 april:
-1) implementing modular approach ahead
