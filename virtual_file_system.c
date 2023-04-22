@@ -62,23 +62,17 @@ AVLTree *avlTree;
 // global variables declaration ends
 
 
-// utility function starts
-char * trimmed(const char *data)
-{
-int i,j,size;
-char *new_string=NULL;
-i=0;
-j=strlen(data)-1;
-while(data[i]==' ') i++;
-while(data[j]==' ') j--;
-size=(j-i)+2;
-new_string=(char *)malloc(sizeof(char)*size);
-if(new_string==NULL) return NULL;
-strncpy(new_string,data+i,size);
-new_string[size-1]='\0';
-return new_string;
-} // function ends
+// forward declaration of function starts
+int populateDataStructure();
+void show_current_working_directory();
+void copy_data(Input *);
+void list_of_content();
+void makeDirectory(Input *);
+void changeDirectory(Input *);
+void displayFileContent(Input *);
+// forward declaration of function ends
 
+// utility functions for populateDataStructure starts
 int create_file_and_prepare_database()
 {
 Header header;
@@ -199,6 +193,7 @@ i++;
 } // while ends
 return 1;
 }
+// utility functions for populateDataStructure ends
 
 int populateDataStructure()
 {
@@ -215,72 +210,12 @@ strcpy(global_path.current_working_directory,"/");
 strcpy(global_path.path_log,"tmfs");
 return 1;
 }
-void extracting_data(char *cmd,Input *input)
-{
-int i,j,count;
-char *vCmd=trimmed(cmd);
-if(vCmd==NULL)
-{
-input->argc=0;
-return;
-}
-if(!strlen(vCmd))
-{
-input->argc=0;
-free(vCmd);
-return;
-}
-count=0;
-i=0;
-input->argc=0;
-while(1)
-{
-j=0;
-while(vCmd[i]!=' ' && vCmd[i]!='\0')
-{
-if(count==0)
-{
-input->command[i]=vCmd[i];
-}
-else if(count==1)
-{
-input->argument1[j]=vCmd[i];
-j++;
-}
-else
-{
-input->argument2[j]=vCmd[i];
-j++;
-}
-i++;
-} // inner while ends
-if(count==0) input->command[i]='\0';
-else if(count==1) input->argument1[j]='\0';
-else input->argument2[j]='\0';
-input->argc++;
-count++;
-if(vCmd[i]=='\0' || count > 2) break;
-i++;
-}
-free(vCmd);
-}
-// utility functions ends
 
-
-
-// forward declaration of function starts
-void show_current_working_directory();
-void copy_data(Input *);
-void list_of_content();
-void makeDirectory(Input *);
-void changeDirectory(Input *);
-void displayFileContent(Input *);
-// forward declaration of function ends
-// function defination starts
 void show_current_working_directory()
 {
 printf("%s\n",global_path.current_working_directory);
 }
+
 void copy_data(Input *input)
 {
 int local_file_descriptor,api_result,permission_mode,wb1,wb2,i;
@@ -320,7 +255,6 @@ else
 {
 strcpy(new_file_name,input->argument2);
 }
-
 
 strcpy(file_path,input->argument1+2);
 
@@ -392,7 +326,6 @@ free(ds);
 free(buffer);
 }
 close(local_file_descriptor);
-
 
 api_result=lseek(global_file_descriptor,0,SEEK_SET);
 if(api_result<0)
@@ -479,8 +412,9 @@ printf("Data is permantly stored but due to low memory Issue please restart the 
 free(ds);
 }
 free(buffer);
-
 }
+
+
 void list_of_content()
 {
 OperationDetail success;
@@ -517,6 +451,77 @@ else
 printf("Some Internal Problem\n");
 }
 }
+
+
+
+char * trimmed(const char *data)
+{
+int i,j,size;
+char *new_string=NULL;
+i=0;
+j=strlen(data)-1;
+while(data[i]==' ') i++;
+while(data[j]==' ') j--;
+size=(j-i)+2;
+new_string=(char *)malloc(sizeof(char)*size);
+if(new_string==NULL) return NULL;
+strncpy(new_string,data+i,size);
+new_string[size-1]='\0';
+return new_string;
+} // function ends
+
+
+void extracting_data(char *cmd,Input *input)
+{
+int i,j,count;
+char *vCmd=trimmed(cmd);
+if(vCmd==NULL)
+{
+input->argc=0;
+return;
+}
+if(!strlen(vCmd))
+{
+input->argc=0;
+free(vCmd);
+return;
+}
+count=0;
+i=0;
+input->argc=0;
+while(1)
+{
+j=0;
+while(vCmd[i]!=' ' && vCmd[i]!='\0')
+{
+if(count==0)
+{
+input->command[i]=vCmd[i];
+}
+else if(count==1)
+{
+input->argument1[j]=vCmd[i];
+j++;
+}
+else
+{
+input->argument2[j]=vCmd[i];
+j++;
+}
+i++;
+} // inner while ends
+if(count==0) input->command[i]='\0';
+else if(count==1) input->argument1[j]='\0';
+else input->argument2[j]='\0';
+input->argc++;
+count++;
+if(vCmd[i]=='\0' || count > 2) break;
+i++;
+}
+free(vCmd);
+}
+
+// function defination starts
 void makeDirectory(Input *)
 {
 
