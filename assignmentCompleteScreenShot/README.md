@@ -1,2 +1,2 @@
 ### pwd statement works
-![pwd.png]()
+![pwd.png](https://github.com/Aakash-Tamboli/virtual_file_system/blob/master/assignmentCompleteScreenShot/pwd_works.png)
