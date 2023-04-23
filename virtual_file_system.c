@@ -84,14 +84,14 @@ global_file_descriptor=open(FILE_NAME,O_RDWR | O_CREAT,permission_mode);
 if(global_file_descriptor==-1) return 0;
 header.number_of_files_directories=0;
 header.new_record_for_ds_byte=sizeof(Header);
-header.new_record_for_acutal_data_byte=1048579;
+header.new_record_for_acutal_data_byte=999989;
 api_result=write(global_file_descriptor,&header,sizeof(Header));
 if(api_result==-1)
 {
 remove(FILE_NAME);
 return 0;
 }
-api_result=lseek(global_file_descriptor,999976,SEEK_SET);
+api_result=lseek(global_file_descriptor,999988,SEEK_SET);
 if(api_result==-1)
 {
 remove(FILE_NAME);
@@ -105,7 +105,7 @@ remove(FILE_NAME);
 printf("Error No: %d\n",errno);
 return 0;
 }
-api_result=lseek(global_file_descriptor,2000000,SEEK_SET);
+api_result=lseek(global_file_descriptor,9999000012,SEEK_SET);
 if(api_result==-1)
 {
 remove(FILE_NAME);
@@ -452,7 +452,225 @@ printf("Some Internal Problem\n");
 }
 }
 
+void makeDirectory(Input *input)
+{
 
+DATA_STRUCTURE *vDs,*ds=NULL;
+Header header;
+int api_result,wb,permission_mode;
+OperationDetail success;
+
+ds=(DATA_STRUCTURE *)malloc(sizeof(DATA_STRUCTURE));
+if(ds==NULL || input->argc < 2)
+{
+printf("unable to create directory\n");
+return;
+}
+
+strcpy(ds->file_name,input->argument1);
+strcpy(ds->parent_directory,global_path.current_working_directory);
+
+vDs=(DATA_STRUCTURE *)getFromAVLTree(avlTree,(void *)ds,&success);
+if(success.succ==true)
+{
+printf("it already exists (duplicate not allowed right now\n");
+free(ds);
+return;
+}
+else
+{
+ds->file_size=-1;
+ds->starting_byte_information=-1;
+ds->end_information=-1;
+
+api_result=lseek(global_file_descriptor,0,SEEK_SET);
+if(api_result<0)
+{
+printf("Some internal problem, directory not created\n");
+free(ds);
+return;
+}
+
+api_result=read(global_file_descriptor,&header,sizeof(Header));
+if(api_result<0)
+{
+printf("Some internal problem, directory not created\n");
+free(ds);
+return;
+}
+
+header.number_of_files_directories++;
+wb=header.new_record_for_ds_byte;
+header.new_record_for_ds_byte=header.new_record_for_ds_byte+sizeof(DATA_STRUCTURE);
+
+api_result=lseek(global_file_descriptor,wb,SEEK_SET);
+if(api_result<0)
+{
+printf("Some internal problem, directory not created\n");
+free(ds);
+return;
+}
+api_result=write(global_file_descriptor,ds,sizeof(DATA_STRUCTURE));
+if(api_result<0)
+{
+printf("Some internal problem, directory not created\n");
+free(ds);
+return;
+}
+
+api_result=lseek(global_file_descriptor,0,SEEK_SET);
+if(api_result<0)
+{
+printf("Some internal problem, directory not created\n");
+free(ds);
+return;
+}
+
+api_result=write(global_file_descriptor,&header,sizeof(Header));
+if(api_result<0)
+{
+printf("Some internal problem, directory not created\n");
+free(ds);
+return;
+}
+addToAVLTree(avlTree,(void *)ds,&success);
+if(success.succ==false)
+{
+printf("Directory created but because of low memory issue you cannot see effect on this time please restart application to see changes\n");
+free(ds);
+}
+} // else ends
+}
+
+
+void changeDirectory(Input *input)
+{
+DATA_STRUCTURE *vDs,*ds=NULL;
+int i,k;
+char path_name[4096],_cwd[4096],_path_log[4096];
+OperationDetail success;
+if(input->argument1[0]=='/')
+{
+printf("No absolute Path Allowed right now\n");
+return;
+}
+
+if(input->argc < 2)
+{
+printf("please Provide a valid directory name\n");
+return;
+}
+
+if(strcmp(input->argument1,"..")==0)
+{
+if(strcmp(global_path.current_working_directory,"/")==0)
+{
+printf("We are already on root directory\n");
+}
+else
+{
+strcpy(_cwd,global_path.current_working_directory);
+strcpy(_path_log,global_path.path_log);
+i=strlen(_cwd)-2;
+k=strlen(_path_log)-1;
+while(_cwd[i]!='/') i--;
+while(_path_log[k]!='/') k--;
+_cwd[i+1]='\0';
+_path_log[k]='\0';
+strcpy(global_path.current_working_directory,_cwd);
+strcpy(global_path.path_log,_path_log);
+}
+return;
+} // change to previous directory if part ends
+
+ds=(DATA_STRUCTURE *)malloc(sizeof(DATA_STRUCTURE));
+if(ds==NULL)
+{
+printf("Low memory issue\n");
+return;
+}
+
+strcpy(ds->file_name,input->argument1);
+strcpy(ds->parent_directory,global_path.current_working_directory);
+vDs=(DATA_STRUCTURE *)getFromAVLTree(avlTree,ds,&success);
+if(success.succ==false)
+{
+printf("Directory not exist\n");
+free(ds);
+return;
+}
+else
+{
+strcat(global_path.current_working_directory,input->argument1);
+strcat(global_path.current_working_directory,"/");
+strcat(global_path.path_log,"/");
+strcat(global_path.path_log,input->argument1);
+}
+}
+
+
+void displayFileContent(Input *input)
+{
+int api_result;
+int i;
+OperationDetail success;
+char *data;
+DATA_STRUCTURE *vDs,*ds=NULL;
+
+if(input->argc<2)
+{
+printf("please provide file name\n");
+return;
+}
+
+ds=(DATA_STRUCTURE *)malloc(sizeof(DATA_STRUCTURE));
+if(ds==NULL)
+{
+printf("low memory can't display\n");
+return;
+}
+
+strcpy(ds->file_name,input->argument1);
+strcpy(ds->parent_directory,global_path.current_working_directory);
+vDs=(DATA_STRUCTURE *)getFromAVLTree(avlTree,ds,&success);
+if(success.succ==false)
+{
+printf("file not exist in current directory\n");
+free(ds);
+return;
+}
+
+free(ds);
+if(vDs->file_size==-1)
+{
+printf("%s is directory not an file\n",vDs->file_name);
+return;
+}
+
+data=(char *)malloc(sizeof(char)*vDs->file_size+1);
+if(data==NULL)
+{
+printf("low memory can't display\n");
+return;
+}
+api_result=lseek(global_file_descriptor,vDs->starting_byte_information,SEEK_SET);
+if(api_result<0)
+{
+printf("Some internal problem\n");
+free(data);
+return;
+}
+api_result=read(global_file_descriptor,data,vDs->file_size);
+if(api_result<0)
+{
+printf("Some internal problem\n");
+free(data);
+return;
+}
+data[vDs->file_size]='\0';
+printf("%s\n",data);
+free(data);
+}
 
 char * trimmed(const char *data)
 {
@@ -522,18 +740,6 @@ free(vCmd);
 }
 
 // function defination starts
-void makeDirectory(Input *)
-{
-
-}
-void changeDirectory(Input *)
-{
-
-}
-void displayFileContent(Input *)
-{
-
-}
 // function defination ends
 int main()
 {
@@ -560,7 +766,7 @@ else if(strcmp(input.command,"xcp")==0) copy_data(&input);
 else if(strcmp(input.command,"ls")==0) list_of_content();
 else if(strcmp(input.command,"mkdir")==0) makeDirectory(&input);
 else if(strcmp(input.command,"cd")==0) changeDirectory(&input);
-else if(strcmp(input.command,"xcat")==0) displayFileContent(&input);
+else if(strcmp(input.command,"cat")==0) displayFileContent(&input);
 else printf("Invalid command\n");
 }
 releasingTheMemory(avlTree);
