@@ -29,4 +29,4 @@ f) if we write `tmpfs/ppp>cd ..` and press enter
 	`tmfs>`
 
 ### Assignment Screenshot
-![screenshot.png]()
+![screenshot.png](https://github.com/Aakash-Tamboli/virtual_file_system/blob/master/TMAssignmentScreenshot.png)
