@@ -23,7 +23,10 @@ c) if we write `tmfs>ls` and press enter then should appear
 d) if we write `tmfs>mkdir ppp` and press enter then add entry of ppp directory in loaded data structure as well as in file DATA_STRUCTURE portition.
 
 e) if we write `tmfs>cd ppp` and press enter this should appear
-	`tmfs/ppp>
+	`tmfs/ppp>`
+
 f) if we write `tmpfs/ppp>cd ..` and press enter
 	`tmfs>`
 
+### Assignment Screenshot
+![screenshot.png]()
